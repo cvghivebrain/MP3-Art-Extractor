@@ -28,7 +28,7 @@ begin
 
   if ParamCount < 1 then // Check if program was run with parameters.
     begin
-    WriteLn('Usage: mp3artex {mp3file}');
+    WriteLn('Usage: mp3artex file.mp3 [outputfolder]');
     exit;
     end;
   outfolder := ParamStr(2);
