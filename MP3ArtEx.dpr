@@ -17,9 +17,15 @@ begin
   while Length(result) < minlen do result := '0'+result; // Add leading 0s.
 end;
 
-procedure GetAPIC(a: integer; mime, ext: string); // Extract image from APIC section.
+procedure GetAPIC(a: integer; mime, ext: string); // Extract image from APIC frame.
 begin
   ClipFile(a+$E+Length(mime),GetDword(a+4)-4-Length(mime),outfolder+'image.'+IntToStrPad(n,3)+'.'+ext);
+  Inc(n); // Next output file number.
+end;
+
+procedure GetFLAC(a: integer; mime, ext: string); // Extract image from FLAC block.
+begin
+  ClipFile(a+$18+Length(mime),GetDword(a+$14+Length(mime)),outfolder+'image.'+IntToStrPad(n,3)+'.'+ext);
   Inc(n); // Next output file number.
 end;
 
@@ -40,16 +46,30 @@ begin
 
   LoadFile(ParamStr(1)); // Load MP3 file to memory.
   n := 0; // Start numbering at 0.
-  for i := 0 to fs-4 do
-    begin
-    if (GetString(i,4) = 'APIC') then
+  if GetString(0,3) = 'ID3' then
+    for i := 0 to fs-4 do
       begin
-      if GetString(i+$B,10) = 'image/jpeg' then GetAPIC(i,'image/jpeg','jpg')
-      else if GetString(i+$B,10) = 'image/webp' then GetAPIC(i,'image/webp','webp')
-      else if GetString(i+$B,9) = 'image/bmp' then GetAPIC(i,'image/bmp','bmp')
-      else if GetString(i+$B,9) = 'image/png' then GetAPIC(i,'image/png','png')
-      else if GetString(i+$B,9) = 'image/tif' then GetAPIC(i,'image/tif','tiff')
-      else if GetString(i+$B,9) = 'image/gif' then GetAPIC(i,'image/gif','gif');
+      if (GetString(i,4) = 'APIC') then
+        begin
+        if GetString(i+$B,10) = 'image/jpeg' then GetAPIC(i,'image/jpeg','jpg')
+        else if GetString(i+$B,10) = 'image/webp' then GetAPIC(i,'image/webp','webp')
+        else if GetString(i+$B,9) = 'image/bmp' then GetAPIC(i,'image/bmp','bmp')
+        else if GetString(i+$B,9) = 'image/png' then GetAPIC(i,'image/png','png')
+        else if GetString(i+$B,9) = 'image/tif' then GetAPIC(i,'image/tif','tiff')
+        else if GetString(i+$B,9) = 'image/gif' then GetAPIC(i,'image/gif','gif');
+        end;
       end;
-    end;
+  if GetString(0,4) = 'fLaC' then
+    for i := 0 to fs-6 do
+      begin
+      if (GetString(i,6) = 'image/') then
+        begin
+        if GetString(i,10) = 'image/jpeg' then GetFLAC(i,'image/jpeg','jpg')
+        else if GetString(i,10) = 'image/webp' then GetFLAC(i,'image/webp','webp')
+        else if GetString(i,9) = 'image/bmp' then GetFLAC(i,'image/bmp','bmp')
+        else if GetString(i,9) = 'image/png' then GetFLAC(i,'image/png','png')
+        else if GetString(i,9) = 'image/tif' then GetFLAC(i,'image/tif','tiff')
+        else if GetString(i,9) = 'image/gif' then GetFLAC(i,'image/gif','gif');
+        end;
+      end;
 end.
