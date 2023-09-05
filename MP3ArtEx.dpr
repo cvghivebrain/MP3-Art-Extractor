@@ -29,6 +29,12 @@ begin
   Inc(n); // Next output file number.
 end;
 
+procedure GetOGG(mime, ext: string); // Extract image from OGG metadata.
+begin
+  ClipFileOutput($20+Length(mime),GetDword($1C+Length(mime)),outfolder+'image.'+IntToStrPad(n,3)+'.'+ext);
+  Inc(n); // Next output file number.
+end;
+
 begin
   { Program start }
 
@@ -70,6 +76,26 @@ begin
         else if GetString(i,9) = 'image/png' then GetFLAC(i,'image/png','png')
         else if GetString(i,9) = 'image/tif' then GetFLAC(i,'image/tif','tiff')
         else if GetString(i,9) = 'image/gif' then GetFLAC(i,'image/gif','gif');
+        end;
+      end;
+  if GetString(0,4) = 'OggS' then
+    for i := 0 to fs-$17 do
+      begin
+      if (GetString(i,$17) = 'METADATA_BLOCK_PICTURE=') then
+        begin
+        NewFileOutput(0); // Clear output file array.
+        GetBase64(i+$17,0); // Read base64 data.
+        if GetStringOutput(8,10) = 'image/jpeg' then GetOGG('image/jpeg','jpg')
+        else if GetStringOutput(8,10) = 'image/webp' then GetOGG('image/webp','webp')
+        else if GetStringOutput(8,9) = 'image/bmp' then GetOGG('image/bmp','bmp')
+        else if GetStringOutput(8,9) = 'image/png' then GetOGG('image/png','png')
+        else if GetStringOutput(8,9) = 'image/tif' then GetOGG('image/tif','tiff')
+        else if GetStringOutput(8,9) = 'image/gif' then GetOGG('image/gif','gif')
+        else
+          begin
+          SaveFileOutput(outfolder+'image.'+IntToStrPad(n,3)+'.bin'); // Save output file as raw.
+          Inc(n);
+          end;
         end;
       end;
 end.
