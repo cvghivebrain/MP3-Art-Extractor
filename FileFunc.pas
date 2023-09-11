@@ -57,7 +57,7 @@ function ByteToBase64(c: byte): byte;
 var
   myfile: file;
   filearray, outputarray: array of byte;
-  fs: integer;
+  fs, fpos: integer;
   folderlist, filelist: array of string;
 
 implementation
@@ -178,6 +178,7 @@ function GetByte(a: int64): byte;
 begin
   if a < fs then result := filearray[a]
   else result := 0;
+  fpos := a+1;
 end;
 
 function GetByteOutput(a: int64): byte;
@@ -205,6 +206,7 @@ end;
 function GetWord(a: int64): word;
 begin
   result := (GetByte(a)*$100)+GetByte(a+1);
+  fpos := a+2;
 end;
 
 function GetWordOutput(a: int64): word;
@@ -217,6 +219,7 @@ end;
 function GetDword(a: int64): longword;
 begin
   result := (GetWord(a)*$10000)+GetWord(a+2);
+  fpos := a+4;
 end;
 
 function GetDwordOutput(a: int64): longword;
@@ -229,6 +232,7 @@ end;
 function GetWordRev(a: int64): word;
 begin
   result := (GetByte(a+1)*$100)+GetByte(a);
+  fpos := a+2;
 end;
 
 function GetWordRevOutput(a: int64): word;
@@ -241,6 +245,7 @@ end;
 function GetDwordRev(a: int64): longword;
 begin
   result := (GetWordRev(a+2)*$10000)+GetWordRev(a);
+  fpos := a+4;
 end;
 
 function GetDwordRevOutput(a: int64): longword;
@@ -259,6 +264,7 @@ begin
     if GetByte(a) in [32..126] then result := result+Chr(GetByte(a)) // Add character to string if valid.
     else maxlength := 0; // Otherwise end the string.
     Inc(a); // Next character.
+    fpos := a;
     end;
 end;
 
@@ -285,6 +291,7 @@ begin
     if GetByte(a) in [32..126] then result := result+Chr(GetByte(a)) // Add character to string if valid.
     else maxlength := 0; // Otherwise end the string.
     a := a+charw; // Next character.
+    fpos := a;
     end;
 end;
 
@@ -314,6 +321,7 @@ begin
     else if (b = 32) and (result = '') then result := result // Ignore leading spaces.
     else maxlength := 0; // Otherwise end the string.
     Inc(a); // Next character.
+    fpos := a;
     end;
   if result = '' then result := '0'; // Return 0 if no string is found.
 end;
@@ -341,6 +349,7 @@ begin
   if fs < a+1 then SetLength(filearray,a+1); // Enlarge file if needed.
   filearray[a] := b;
   fs := Length(filearray);
+  fpos := a+1;
 end;
 
 procedure WriteByteOutput(a: int64; b: byte);
@@ -357,6 +366,7 @@ begin
   filearray[a] := w shr 8;
   filearray[a+1] := w and $FF;
   fs := Length(filearray);
+  fpos := a+2;
 end;
 
 procedure WriteWordOutput(a: int64; w: word);
@@ -374,6 +384,7 @@ begin
   filearray[a+1] := w shr 8;
   filearray[a] := w and $FF;
   fs := Length(filearray);
+  fpos := a+2;
 end;
 
 procedure WriteWordRevOutput(a: int64; w: word);
@@ -391,6 +402,7 @@ begin
   WriteWord(a,d shr 16);
   WriteWord(a+2,d and $FFFF);
   fs := Length(filearray);
+  fpos := a+4;
 end;
 
 procedure WriteDwordOutput(a: int64; d: longword);
@@ -408,6 +420,7 @@ begin
   WriteWordRev(a+2,d shr 16);
   WriteWordRev(a,d and $FFFF);
   fs := Length(filearray);
+  fpos := a+4;
 end;
 
 procedure WriteDwordRevOutput(a: int64; d: longword);
@@ -548,6 +561,7 @@ loop:
       end;
   end;
   Inc(a); // Next byte.
+  fpos := a;
   pos := pos+6; // Next 6 bits.
   goto loop; // Repeat.
 end;
